@@ -4,7 +4,8 @@
 #include <fstream>
 #include <vector>
 #include <cstdlib>
-#include <algorithm>   
+#include <algorithm>  
+#include <climits> 
 
 using namespace std;
 
@@ -29,7 +30,7 @@ void fileMergeBuff(fstream &file, vector<string> &vecStrs, string &pend, long lo
 	{
 		if((usedMem + lineData.size()) <= memLimit)
 		{
-			usedMem += lineData.size();
+			usedMem += lineData.size() + sizeof(string);
 			dataBuff.push_back(lineData);
 		}
 		else
@@ -58,7 +59,11 @@ int main(int argc, char **argv)
 	sscanf(argv[3], "%lld", &availMemSize);
 
 	/* Only use 1/2 available memory to ensure the health of software */
-	availMemSize = availMemSize*1/2;
+	if(availMemSize >= LONG_MAX)
+	{
+		availMemSize = LONG_MAX;
+	}	
+	availMemSize = availMemSize / 2;
 	
 	/* Distribute input file to chunk files */
 	{
@@ -74,7 +79,7 @@ int main(int argc, char **argv)
 			if((usedSize + tp.size()) <= availMemSize)
 			{
 				lineStr.push_back(tp);
-				usedSize += tp.size();
+				usedSize += tp.size() + sizeof(string);
 			}
 			else{
 				cntChunk++;
@@ -89,7 +94,7 @@ int main(int argc, char **argv)
 				chunkFile.close();
 				lineStr.clear();
 				lineStr.push_back(tp);
-				usedSize = tp.size();
+				usedSize = tp.size() + sizeof(string);
 			}
 		}
 		ipFile.close();
