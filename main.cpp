@@ -12,11 +12,9 @@ using namespace std;
 
 void createChunkFile(int chunkIdx, vector<string> &strs)
 {
-	char buffNum[33];
-	itoa(chunkIdx, buffNum, 10);
 	fstream chunkFile;
-	
-	chunkFile.open(buffNum, ios::out);
+	string numStr = to_string(chunkIdx);
+	chunkFile.open(numStr, ios::out);
 	sort(strs.begin(),strs.end());
 	/* Write string to chunk file */
 	for(string str:strs)
@@ -146,7 +144,9 @@ int main(int argc, char **argv)
 	char firstLineFlag = 0;
 	long long int sortBufSize = 0;
 	long long int chunkSize = availMemSize / (cntChunk + 1);
-
+	string smallestStr;
+	int smlIdx = 0;
+	
 	/* Clear old content */
 	opFile.open(outputFileName, ios::out|ios::trunc);
 	opFile.close();
@@ -156,8 +156,8 @@ int main(int argc, char **argv)
 	/* Open all chunk file */
 	for(int idx = 0; idx < cntChunk; ++idx)
 	{
-		itoa(idx + 1, buffNum, 10);
-		chunkFiles[idx].open(buffNum, ios::in);
+		string numStr = to_string(idx + 1);
+		chunkFiles[idx].open(numStr, ios::in);
 	}
 
 	/* Load data from chunk files to merge buffers */ 
@@ -169,8 +169,8 @@ int main(int argc, char **argv)
 	/* Merge all buffer */
 	while(chunkFiles.size() > 0)
 	{
-		string smallestStr = multiMergWay[0][checkingPoint[0]];
-		int smlIdx = 0;
+		smallestStr = multiMergWay[0][checkingPoint[0]];
+		smlIdx = 0;
 		/* Find the smallest string in merge buffers */
 		for(int idx = 1; idx < chunkFiles.size(); ++idx)
 		{
