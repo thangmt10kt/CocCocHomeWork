@@ -4,8 +4,8 @@
 #include <fstream>
 #include <vector>
 #include <cstdlib>
-#include <algorithm>   
-#include <climits>
+#include <algorithm>
+#include <time.h>
 #include <iostream>
 
 using namespace std;
@@ -19,7 +19,8 @@ void createChunkFile(int chunkIdx, vector<string> &strs)
 	/* Write string to chunk file */
 	for(string str:strs)
 	{
-		chunkFile << str << endl;
+		str += "\n";
+		chunkFile << str;
 	}
 	chunkFile.close();
 }
@@ -45,26 +46,17 @@ inline void fileMergeBuff(fstream &file, vector<string> &vecStrs, string &pend, 
 	/* Update the merge buffer */
 	while(getline(file, lineData))
 	{
-		if((usedMem + lineData.size()) <= memLimit)
+		try
 		{
-			try
-			{
-				vecStrs.push_back(lineData);
-				usedMem = usedMem + lineData.size() + sizeof(string);
-			}
-			catch (std::bad_alloc& ba)
-			{
-				pend = lineData;
-				stopFlag = 1;
-			}
+			vecStrs.push_back(lineData);
+			usedMem = usedMem + lineData.size() + sizeof(string);
 		}
-		else
+		catch (std::bad_alloc& ba)
 		{
 			pend = lineData;
-			stopFlag = 1;
+			break;
 		}
-		
-		if(stopFlag == 1)
+		if((usedMem + lineData.size()) >= memLimit)
 		{
 			break;
 		}
@@ -81,12 +73,11 @@ int main(int argc, char **argv)
 	fstream opFile;
 	long long int usedSize = 0;
 	int cntChunk = 0;
-	char buffNum[33];
 
 	/* get the memory size */
 	sscanf(argv[3], "%lld", &availMemSize);
 
-	/* Only use 3/2 available memory to ensure the health of software */
+	/* Only use 3/4 available memory to ensure the health of software */
 	availMemSize = availMemSize*3/4;
 
 	/* Distribute input file to chunk files */
@@ -194,7 +185,8 @@ int main(int argc, char **argv)
 				/* update the output file in case the allocation is fail */
 				for(string str:sortBuf)
 				{
-					opFile << str << endl;
+					str += "\n";
+					opFile << str;
 				}
 
 				sortBuf.clear();
@@ -207,7 +199,8 @@ int main(int argc, char **argv)
 			/* Write to end of output file in case sort buffer is full*/
 			for(string str:sortBuf)
 			{
-				opFile << str << endl;
+				str += "\n";
+				opFile << str;
 			}
 
 			sortBuf.clear();
@@ -242,12 +235,18 @@ int main(int argc, char **argv)
 		/* Add remaining string */
 		for(int idx = 0; idx < sortBuf.size() - 1; ++idx)
 		{
-			opFile << sortBuf[idx] << endl;
+			opFile << (sortBuf[idx] + "\n") ;
 		}
 
 		opFile << sortBuf[sortBuf.size() - 1];
 	}
 	
+	for(int idx = 1; idx <= cntChunk; ++idx)
+	{
+		remove(to_string(idx).c_str());
+	}
+	
 	opFile.close();
+	
 	return 0;
 } 
